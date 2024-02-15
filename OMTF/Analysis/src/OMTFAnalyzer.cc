@@ -89,13 +89,17 @@ void OMTFAnalyzer::finalize(){ myHistos_->finalizeHistograms();}
 bool OMTFAnalyzer::passQuality(const L1Obj & aL1Cand,
 			       const std::string & sysType,
 			       const std::string & selType){
+
+
+  
 			       
-  bool qualitySelection = aL1Cand.q>=12 && aL1Cand.bx==0;      
+  bool qualitySelection = aL1Cand.q>=12 && aL1Cand.bx==0;   
+   
   
   if(sysType=="OMTF") qualitySelection &= (aL1Cand.type==L1Obj::OMTF_emu);
-  else if(sysType.find("OMTFDispU")!=std::string::npos || sysType.find("OMTFDispC")!=std::string::npos) qualitySelection &= (aL1Cand.type==L1Obj::BMTF);
-  else if(sysType=="OMTFDisp") qualitySelection &=  (aL1Cand.type==L1Obj::BMTF) && aL1Cand.ptUnconstrainedValue()>aL1Cand.ptValue()+10 && (std::abs(aL1Cand.d0Value())>75);
-  else if(sysType=="GMT") qualitySelection &= aL1Cand.type==L1Obj::uGMT_emu;
+  else if(sysType=="GMT") qualitySelection &= aL1Cand.type==L1Obj::uGMTPhase2_emu;
+  else if(sysType=="LUT") qualitySelection &= aL1Cand.type==L1Obj::BMTF;
+  
   else if(sysType.find("Vx")!=std::string::npos) qualitySelection = true;
   return qualitySelection;
 }
@@ -117,7 +121,7 @@ void OMTFAnalyzer::fillTurnOnCurve(const int & iPtCut,
 
   for(auto & aCand: myL1Coll){
     bool pass = passQuality(aCand ,sysType, selType);
-    if(!pass) continue;    
+    if(!pass) continue;   
     double deltaEta = std::abs(myGenObj.eta()-aCand.etaValue());  
     deltaEta =   -myGenObj.eta()*aCand.etaValue();//takes value of +1 when eta signs do not match
     tmpR = deltaEta;

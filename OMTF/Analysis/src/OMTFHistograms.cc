@@ -15,7 +15,7 @@
 
 #include "utilsL1RpcStyle.h"
 
-const std::vector<std::string> OMTFHistograms::algos = {"OMTF", "OMTFDisp", "OMTFDispU", "OMTFDispC", "GMT"};  
+const std::vector<std::string> OMTFHistograms::algos = {"OMTF", "LUT", "GMT", "GMTPhase2"};  
 const std::vector<double> OMTFHistograms::ptBins = {1., 4, 4.5, 5, 5.5, 6, 6.5, 7, 8.5, 10, 
                                                     12, 14, 16, 18.5, 21, 23, 26, 28, 30, 32, 
                                                     36, 40, 48, 54, 60, 70, 82, 96, 114, 200, 99999};
@@ -93,11 +93,12 @@ void OMTFHistograms::finalizeHistograms(){
 
   AnalysisHistograms::finalizeHistograms();
   utilsL1RpcStyle()->cd();
-
+  plotRate("Tot");
+  return;
   plotOMTFVsOther(OMTFHistograms::iPtCuts.at(3),"OMTFDisp");
   plotOMTFVsOther(OMTFHistograms::iPtCuts.at(3),"OMTFDispU");
   plotOMTFVsOther(OMTFHistograms::iPtCuts.at(3),"OMTFDispC");
-  plotOMTFVsOther(OMTFHistograms::iPtCuts.at(3),"GMT");
+  plotOMTFVsOther(OMTFHistograms::iPtCuts.at(3),"simOmtfPhase2Digis");
   
   for(auto & anAlgo : algos){    
     plotEffPanel(anAlgo,"Pt");
@@ -414,26 +415,22 @@ void OMTFHistograms::plotRate(std::string type){
   
   TH1 *hRateVx = getRateHisto("Vx",type);
   TH1 *hRateOMTF = getRateHisto("OMTF",type);
-  TH1 *hRateOMTFdisp = getRateHisto("OMTFDisp",type);
-  TH1 *hRateOMTFdispC = getRateHisto("OMTFDispC",type);
+  TH1 *hRateLUT = getRateHisto("LUT",type);
   
-  if(!hRateVx || !hRateOMTF || !hRateOMTFdispC || !hRateOMTFdisp) return;
+  if(!hRateVx || !hRateOMTF || !hRateLUT) return;
 
   int iPtCut = OMTFHistograms::iPtCuts.at(3);
   float ptCut = OMTFHistograms::ptBins.at(iPtCut);
 
   hRateVx->SetLineWidth(3);
   hRateOMTF->SetLineWidth(3);
-  hRateOMTFdispC->SetLineWidth(3);
-  hRateOMTFdisp->SetLineWidth(3);
+  hRateLUT->SetLineWidth(3);
 
   hRateVx->SetLineColor(1);
   hRateOMTF->SetLineColor(4);
-  hRateOMTFdispC->SetLineColor(2);
-  hRateOMTFdisp->SetLineColor(kYellow+4);
+  hRateLUT->SetLineColor(2);
 
-  hRateOMTFdispC->SetLineStyle(2);
-  hRateOMTFdisp->SetLineStyle(1);
+  hRateLUT->SetLineStyle(2);
 
   TCanvas* c = new TCanvas("cRate","Rate", 600, 650);
   c->SetLogy(1);
@@ -468,30 +465,27 @@ void OMTFHistograms::plotRate(std::string type){
     pad1->SetGrid(1,0);
     hRateVx->Draw();
     hRateOMTF->DrawCopy("same");
-    hRateOMTFdispC->DrawCopy("same");
-    hRateOMTFdisp->DrawCopy("same");
+    hRateLUT->DrawCopy("same");
     
     std::cout<<"Rate OMTF CMSSW default @ "<<ptCut<<" GeV "<< hRateOMTF->GetBinContent(hRateOMTF->FindBin(ptCut+0.01))<<std::endl;
-    std::cout<<"Rate OMTFdispC @ "<<ptCut<<" GeV "<< hRateOMTFdispC->GetBinContent(hRateOMTFdispC->FindBin(ptCut+0.01))<<std::endl;
+    std::cout<<"Rate LUT @ "<<ptCut<<" GeV "<< hRateLUT->GetBinContent(hRateLUT->FindBin(ptCut+0.01))<<std::endl;
 
     c->cd();
     pad2->Draw();
     pad2->cd();
 
-    hRateOMTFdispC->GetXaxis()->SetRangeUser(2,50);
-    hRateOMTFdispC->SetXTitle("p_{T}^{cut} [GeV/c]");
-    hRateOMTFdispC->SetYTitle("new/default");
-    hRateOMTFdispC->GetXaxis()->SetLabelSize(0.1);
-    hRateOMTFdispC->GetXaxis()->SetTitleSize(0.1);
-    hRateOMTFdispC->GetYaxis()->SetLabelSize(0.1);
-    hRateOMTFdispC->GetYaxis()->SetTitleSize(0.1);    
-    hRateOMTFdispC->GetYaxis()->SetTitleOffset(0.5);
-    hRateOMTFdispC->Divide(hRateOMTF);
-    hRateOMTFdisp->Divide(hRateOMTF);
-    hRateOMTFdispC->SetMaximum(2.6);
-    hRateOMTFdispC->SetMinimum(0.3);
-    hRateOMTFdispC->DrawCopy();
-    hRateOMTFdisp->DrawCopy("same");
+    hRateLUT->GetXaxis()->SetRangeUser(2,50);
+    hRateLUT->SetXTitle("p_{T}^{cut} [GeV/c]");
+    hRateLUT->SetYTitle("new/default");
+    hRateLUT->GetXaxis()->SetLabelSize(0.1);
+    hRateLUT->GetXaxis()->SetTitleSize(0.1);
+    hRateLUT->GetYaxis()->SetLabelSize(0.1);
+    hRateLUT->GetYaxis()->SetTitleSize(0.1);    
+    hRateLUT->GetYaxis()->SetTitleOffset(0.5);
+    hRateLUT->Divide(hRateOMTF);
+    hRateLUT->SetMaximum(2.6);
+    hRateLUT->SetMinimum(0.3);
+    hRateLUT->DrawCopy();
 
     TLine *aLine = new TLine(0,0,0,0);
     aLine->SetLineWidth(2);
@@ -501,31 +495,26 @@ void OMTFHistograms::plotRate(std::string type){
   }  
   else if(type.find("VsEta")!=std::string::npos){
     c->SetLogy(0);
-    hRateOMTFdispC->SetXTitle("muon #eta");
-    double max = std::max(hRateOMTFdispC->GetMaximum(), hRateOMTF->GetMaximum());
-    max = std::max(max, hRateOMTFdisp->GetMaximum());
-    hRateOMTFdispC->SetMaximum(1.5*max);
-    hRateOMTFdispC->Draw();
-    hRateOMTFdisp->Draw("same");
+    hRateLUT->SetXTitle("muon #eta");
+    double max = std::max(hRateLUT->GetMaximum(), hRateOMTF->GetMaximum());
+    hRateLUT->SetMaximum(1.5*max);
+    hRateLUT->Draw();
     hRateOMTF->Draw("same");
     leg->SetHeader(TString::Format("p_{T}^{cut} = %d  GeV/c", int(ptCut)).Data());
   }
   else if(type=="VsPt"){
     c->SetLogy(1);
-    hRateOMTFdispC->SetXTitle("p_{T}^{gen} [GeV/c]");
-    hRateOMTFdispC->SetAxisRange(2,100);
-    double max = std::max(hRateOMTFdispC->GetMaximum(), hRateOMTF->GetMaximum());
-    max = std::max(max, hRateOMTFdisp->GetMaximum());
-    hRateOMTFdispC->SetMaximum(10*max);
-    hRateOMTFdispC->Draw();
-    hRateOMTFdisp->Draw("same");
+    hRateLUT->SetXTitle("p_{T}^{gen} [GeV/c]");
+    hRateLUT->SetAxisRange(2,100);
+    double max = std::max(hRateLUT->GetMaximum(), hRateOMTF->GetMaximum());
+    hRateLUT->SetMaximum(10*max);
+    hRateLUT->Draw();
     hRateOMTF->Draw("same");
     leg->SetHeader(TString::Format("p_{T}^{cut} = %d  GeV/c",int(ptCut)).Data());
   }
  
   leg->AddEntry(hRateOMTF,"CMSSW default");
-  leg->AddEntry(hRateOMTFdispC,"p_{T} constr.");
-  leg->AddEntry(hRateOMTFdisp,"max(unconstr., constr.)");
+  leg->AddEntry(hRateLUT,"LUT");
   leg->Draw();
 
   c->Print(("fig_eps/Rate"+type+".eps").c_str());
